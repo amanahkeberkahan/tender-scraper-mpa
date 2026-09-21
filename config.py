@@ -40,3 +40,10 @@ EMAIL_TUJUAN = os.environ.get("EMAIL_TUJUAN", "multipowerabadi@gmail.com")
 TELEGRAM_AKTIF = os.environ.get("TELEGRAM_AKTIF", "false").lower() == "true"
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+# ---- DASHBOARD ProjectFlow (project.multipowerabadi.co.id) ----
+DASHBOARD_AKTIF = os.environ.get("DASHBOARD_AKTIF", "true").lower() == "true"
+DASHBOARD_API_URL = os.environ.get(
+    "DASHBOARD_API_URL", "https://project.multipowerabadi.co.id/tender_import.php"
+)
+DASHBOARD_API_KEY = os.environ.get("DASHBOARD_API_KEY", "")

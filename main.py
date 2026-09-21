@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 
 import config
+import dashboard
 import notify
 import storage
 from fetcher import EndpointTidakDitemukan, tarik_tender_portal
@@ -41,6 +42,8 @@ def main():
             print(f"[{portal['nama']}] {len(daftar)} tender diterima dari server.")
 
             baru_di_portal_ini = 0
+            tender_baru_portal_ini = []
+            waktu_temu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             for t in daftar:
                 if t.id_unik in id_tersimpan:
                     continue
@@ -51,10 +54,13 @@ def main():
                 storage.simpan_tender(conn, t, portal["nama"])
                 total_baru += 1
                 baru_di_portal_ini += 1
+                tender_baru_portal_ini.append(t)
                 if t.relevan:
                     tender_baru_relevan.append(t)
 
             print(f"[{portal['nama']}] {baru_di_portal_ini} tender BARU disimpan.")
+
+            dashboard.kirim_ke_dashboard(tender_baru_portal_ini, portal["nama"], waktu_temu)
 
         except EndpointTidakDitemukan as e:
             print(f"[{portal['nama']}] GAGAL -- struktur endpoint berubah: {e}")

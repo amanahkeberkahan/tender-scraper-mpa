@@ -34,9 +34,21 @@ bisnis MPA (konstruksi, interior, renovasi, event), simpan ke database lokal
 - `fetcher.py` — tarik data dari 1 portal (bisa dites langsung: `python fetcher.py surabaya`)
 - `storage.py` — simpan ke SQLite (`tender.db`), dedup by ID tender
 - `notify.py` — kirim email (+ Telegram opsional) saat ada tender baru relevan
+- `dashboard.py` — kirim tender baru ke dashboard web ProjectFlow (project.multipowerabadi.co.id)
 - `config.py` — daftar portal, kata kunci relevansi, baca kredensial dari env var
 - `main.py` — orkestrator, ini yang dijadwalkan jalan otomatis
 - `probe_endpoints.py` — skrip diagnostic (sudah tidak perlu dipakai lagi kecuali LPSE ganti struktur lagi)
+
+## Integrasi Dashboard ProjectFlow
+
+Repo terpisah: `github.com/amanahkeberkahan/projectflow-mpa`. Setelah migrasi
+`migrate_v2_4_tender_lpse.php` dijalankan di sana dan `config/tender_api.php`
+diisi API key, set environment variable di sini:
+```
+setx DASHBOARD_API_KEY "api_key_yang_sama_dengan_config/tender_api.php"
+```
+`DASHBOARD_API_URL` sudah default ke `https://project.multipowerabadi.co.id/tender_import.php`,
+tidak perlu diubah kecuali domainnya beda.
 
 ## Setup
 
