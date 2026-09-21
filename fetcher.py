@@ -67,12 +67,19 @@ def bersih(v) -> str:
 
 
 def parse_rupiah(v) -> int:
+    """Parse format Rupiah Indonesia: 'Rp. 57.446.418.426,00'
+    -> titik = pemisah ribuan, koma = pemisah desimal (KEBALIKAN dari format Inggris)."""
     if v is None:
         return 0
     if isinstance(v, (int, float)):
         return int(v)
-    angka = re.sub(r"[^\d]", "", str(v))
-    return int(angka) if angka else 0
+    s = str(v).strip()
+    if not s or s.lower() == "none":
+        return 0
+    s = re.sub(r"[^\d,.\-]", "", s)  # buang "Rp.", spasi, dll -- sisakan angka+pemisah
+    bagian_rupiah = s.split(",")[0] if "," in s else s
+    bagian_rupiah = bagian_rupiah.replace(".", "")
+    return int(bagian_rupiah) if bagian_rupiah.isdigit() else 0
 
 
 def cek_relevan(nama_paket: str, kata_kunci: list) -> bool:
@@ -164,15 +171,21 @@ def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
         else:
             nilai = list(r)
 
-        if len(nilai) < 5:
+        if len(nilai) < 11:
             continue  # baris tidak lengkap, lewati
 
+        # Pemetaan kolom dikonfirmasi dari data mentah asli server (lihat --debug),
+        # BUKAN tebakan dari struktur MVP lama:
+        #   0=kode  1=nama paket  2=instansi  3=tahapan  4=HPS dibulatkan (mis. "60,2 M")
+        #   5=metode kualifikasi  6=jenis  7=metode evaluasi
+        #   8=kategori + tahun anggaran (mis. "Pekerjaan Konstruksi - TA 2026,2027")
+        #   9=jumlah peserta  10=HPS presisi penuh (mis. "Rp. 57.446.418.426,00")
         kode_tender = bersih(nilai[0])
         nama = bersih(nilai[1])
-        instansi = bersih(nilai[2]) if len(nilai) > 2 else ""
-        tahapan = bersih(nilai[3]) if len(nilai) > 3 else ""
-        hps_raw = nilai[4] if len(nilai) > 4 else 0
-        jadwal = bersih(nilai[5]) if len(nilai) > 5 else ""
+        instansi = bersih(nilai[2])
+        tahapan = bersih(nilai[3])
+        kategori_tahun = bersih(nilai[8])
+        hps_raw = nilai[10]
 
         if not nama:
             continue
@@ -186,7 +199,7 @@ def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
         hasil.append(Tender(
             id_unik=id_unik, kode=kode_angka or kode_tender, nama_paket=nama,
             instansi=instansi, tahapan=tahapan, hps=parse_rupiah(hps_raw),
-            jadwal=jadwal, link=link,
+            jadwal=kategori_tahun, link=link,
             relevan=cek_relevan(nama, kata_kunci_relevan),
         ))
 
