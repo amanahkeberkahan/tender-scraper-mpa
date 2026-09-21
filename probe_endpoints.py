@@ -95,6 +95,8 @@ class ProbeResult:
     snippet: str = ""
     hint_found: list = field(default_factory=list)
     error: str = ""
+    server_header: str = ""
+    waf_terdeteksi: str = ""
 
 
 RESULTS: list[ProbeResult] = []
@@ -137,6 +139,28 @@ def coba_parse_json(teks: str):
         return False, None
 
 
+def deteksi_waf(headers: dict, teks: str) -> str:
+    """Cari sinyal vendor WAF/anti-bot dari header respons + isi body 403."""
+    gabungan_header = " ".join(f"{k}:{v}" for k, v in headers.items()).lower()
+    cuplikan_body = teks[:2000].lower()
+
+    penanda = [
+        ("Cloudflare", ["cloudflare", "cf-ray", "cf-mitigated", "attention required"]),
+        ("Imperva/Incapsula", ["incapsula", "imperva", "_incap_"]),
+        ("Akamai", ["akamaighost", "akamai"]),
+        ("AWS WAF", ["awselb", "x-amzn", "aws waf"]),
+        ("Sucuri", ["sucuri"]),
+        ("ModSecurity", ["mod_security", "modsecurity", "not acceptable"]),
+        ("Nginx generic block", ["nginx" ]),
+        ("Indonesia govt WAF (BSSN/Pusdatin/Tuwaga dsb.)", ["bssn", "pusdatin", "tuwaga", "waf indonesia"]),
+    ]
+    for nama, kata_kunci in penanda:
+        for kk in kata_kunci:
+            if kk in gabungan_header or kk in cuplikan_body:
+                return f"{nama} (terdeteksi via '{kk}')"
+    return "tidak teridentifikasi dari header/body (perlu cek manual)"
+
+
 def catat(session: requests.Session, portal: dict, method: str, url: str,
           payload_desc: str, **request_kwargs) -> ProbeResult:
     r = ProbeResult(portal=portal["nama"], kode=portal["kode"], method=method,
@@ -146,8 +170,11 @@ def catat(session: requests.Session, portal: dict, method: str, url: str,
         r.status_code = resp.status_code
         r.content_type = resp.headers.get("Content-Type", "")
         r.content_length = len(resp.content)
+        r.server_header = resp.headers.get("Server", "") + " | " + resp.headers.get("Via", "")
         teks = resp.text
         r.snippet = teks[:400].replace("\n", " ")
+        if r.status_code and r.status_code >= 400:
+            r.waf_terdeteksi = deteksi_waf(dict(resp.headers), teks)
 
         ok, data = coba_parse_json(teks)
         r.is_json = ok
@@ -192,7 +219,17 @@ def probe_portal(portal: dict):
     status = hasil_awal.status_code
     print(f"  [HTML awal] {base}/lelang -> HTTP {status}"
           + (f" | petunjuk: {hasil_awal.hint_found[:3]}" if hasil_awal.hint_found else " | tidak ada petunjuk jelas di HTML"))
+    if status and status >= 400:
+        print(f"    >> Server header : {hasil_awal.server_header}")
+        print(f"    >> WAF terdeteksi: {hasil_awal.waf_terdeteksi}")
+        print(f"    >> Cuplikan body : {hasil_awal.snippet[:300]}")
     time.sleep(JEDA_ANTAR_REQUEST_DETIK)
+
+    if status == 403:
+        print(f"  !! Halaman HTML dasar (bukan AJAX) sudah 403 -> blokir terjadi di level "
+              f"IP/jaringan/WAF, bukan salah path. Lewati {len(CANDIDATE_PATHS)} kandidat "
+              f"endpoint (percuma dicoba, hasilnya pasti sama & cuma boroskan request).")
+        return
 
     ajax_headers = {
         "X-Requested-With": "XMLHttpRequest",
