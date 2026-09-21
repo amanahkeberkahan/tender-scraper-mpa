@@ -104,7 +104,8 @@ def _ambil_konfigurasi_ajax(session: requests.Session, base_url: str) -> tuple:
 
 
 def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
-                          maks_baris: int = 300, jeda_detik: float = 1.5) -> list:
+                          maks_baris: int = 300, jeda_detik: float = 1.5,
+                          debug: bool = False) -> list:
     """Tarik semua tender dari satu portal LPSE. Return list[Tender]."""
     base_url = f"https://spse.inaproc.id/{kode_portal}"
     session = requests.Session()
@@ -142,6 +143,17 @@ def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
     resp.raise_for_status()
     data_json = resp.json()
     baris_data = data_json.get("data", [])
+
+    if debug and baris_data:
+        print(f"\n--- DEBUG: {len(baris_data)} baris mentah dari server, contoh baris pertama ---")
+        contoh = baris_data[0]
+        if isinstance(contoh, dict):
+            for k, v in contoh.items():
+                print(f"  key={k!r:20} -> {str(v)[:150]!r}")
+        else:
+            for i, v in enumerate(contoh):
+                print(f"  index={i:2} -> {str(v)[:150]!r}")
+        print("--- akhir DEBUG ---\n")
 
     hasil = []
     for r in baris_data:
@@ -187,6 +199,7 @@ if __name__ == "__main__":
     import sys
 
     kode = sys.argv[1] if len(sys.argv) > 1 else "surabaya"
+    mode_debug = "--debug" in sys.argv
     kata_kunci = [
         "konstruksi", "bangunan", "gedung", "renovasi", "rehabilitasi",
         "interior", "fit out", "furniture", "mebel", "meubelair",
@@ -197,7 +210,7 @@ if __name__ == "__main__":
 
     print(f"Menarik data dari portal '{kode}'...")
     try:
-        daftar = tarik_tender_portal(kode, kata_kunci)
+        daftar = tarik_tender_portal(kode, kata_kunci, debug=mode_debug)
         print(f"\nBerhasil! {len(daftar)} tender ditemukan.")
         relevan = [t for t in daftar if t.relevan]
         print(f"Relevan untuk MPA: {len(relevan)}\n")
