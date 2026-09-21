@@ -97,3 +97,20 @@ def kirim_notifikasi(tender_list: list):
         kirim_email(judul, teks, html)
     if config.TELEGRAM_AKTIF:
         kirim_telegram(teks)
+
+
+if __name__ == "__main__":
+    # Tes cepat kirim notifikasi tanpa perlu ada tender baru sungguhan.
+    # Jalankan: python notify.py
+    from fetcher import Tender
+
+    contoh = [Tender(
+        id_unik="tes-001", kode="TES001",
+        nama_paket="CONTOH: Pembangunan Gedung Kantor 3 Lantai",
+        instansi="Dinas Contoh Provinsi", tahapan="Pengumuman",
+        hps=4_500_000_000, jadwal="Pekerjaan Konstruksi - TA 2027",
+        link="https://spse.inaproc.id/surabaya/lelang", relevan=True,
+    )]
+    print("Mengirim notifikasi TES...")
+    kirim_notifikasi(contoh)
+    print("Selesai. Cek EMAIL_TUJUAN di config.py untuk lihat hasilnya.")
