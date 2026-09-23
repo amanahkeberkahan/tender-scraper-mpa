@@ -43,6 +43,7 @@ EMAIL_AKTIF = os.environ.get("EMAIL_AKTIF", "true").lower() == "true"
 EMAIL_PENGIRIM = os.environ.get("EMAIL_PENGIRIM", "")       # alamat Gmail pengirim
 EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")  # App Password Gmail (bukan password login biasa)
 EMAIL_TUJUAN = os.environ.get("EMAIL_TUJUAN", "multipowerabadi@gmail.com")
+EMAIL_CC = os.environ.get("EMAIL_CC", "sekre.multipowerabadi@gmail.com")
 
 # ---- TELEGRAM (opsional) ----
 TELEGRAM_AKTIF = os.environ.get("TELEGRAM_AKTIF", "false").lower() == "true"

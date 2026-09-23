@@ -59,13 +59,16 @@ def kirim_email(judul: str, teks: str, html: str):
         pesan["Subject"] = judul
         pesan["From"] = config.EMAIL_PENGIRIM
         pesan["To"] = config.EMAIL_TUJUAN
+        if config.EMAIL_CC:
+            pesan["Cc"] = config.EMAIL_CC
         pesan.attach(MIMEText(teks, "plain"))
         pesan.attach(MIMEText(html, "html"))
 
+        penerima = config.EMAIL_TUJUAN.split(",") + (config.EMAIL_CC.split(",") if config.EMAIL_CC else [])
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(config.EMAIL_PENGIRIM, config.EMAIL_APP_PASSWORD)
-            server.sendmail(config.EMAIL_PENGIRIM, config.EMAIL_TUJUAN.split(","), pesan.as_string())
-        print(f"[NOTIFY] Email terkirim ke {config.EMAIL_TUJUAN}")
+            server.sendmail(config.EMAIL_PENGIRIM, penerima, pesan.as_string())
+        print(f"[NOTIFY] Email terkirim ke {config.EMAIL_TUJUAN} (Cc: {config.EMAIL_CC or '-'})")
     except smtplib.SMTPException as e:
         print(f"[NOTIFY] Email GAGAL: {e}")
 
