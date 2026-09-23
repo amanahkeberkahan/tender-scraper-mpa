@@ -36,6 +36,14 @@ KATA_KUNCI_RELEVAN = [
     # Kemendag, dan kementerian lain untuk tender expo luar negeri)
     "fair", "expo", "exhibition", "pavilion", "paviliun",
     "konvensi", "convention", "gala", "seremoni",
+    # Kata kunci inti dari daftar layanan MPA (kalimat panjang aslinya tidak
+    # dipakai -- judul tender LPSE pendek & spesifik, tidak akan pernah cocok
+    # persis dengan kalimat deskriptif). "rumah" sengaja tidak dipakai
+    # sendirian (kepanjangan luas -- banyak fasilitas pemerintah namanya
+    # "Rumah ..." yang tidak terkait konstruksi, mis. "Rumah Tahfidz").
+    "kantor", "ruko", "gudang", "pabrik", "sekolah", "rumah sakit",
+    "eksterior", "kitchen set", "hydrant", "struktur baja", "beton",
+    "pekerjaan sipil", "general contractor",
 ]
 
 HPS_MINIMUM = 0  # 0 = tampilkan semua. Contoh: 200_000_000 = hanya >= 200 juta.
