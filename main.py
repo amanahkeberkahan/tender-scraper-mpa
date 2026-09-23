@@ -22,6 +22,15 @@ from fetcher import EndpointTidakDitemukan, tarik_tender_portal
 import requests
 
 
+def tahapan_selesai(tahapan: str) -> bool:
+    """Sama logikanya seperti dashboard (app.js tenderTahapanSelesai) --
+    tender yang tahapannya mengandung 'selesai'/'gagal'/'batal' berarti
+    prosesnya sudah tutup, tidak bisa diikuti lagi. Tidak perlu bikin
+    tim ribut soal tender yang sudah lewat."""
+    t = (tahapan or "").lower()
+    return "selesai" in t or "gagal" in t or "batal" in t
+
+
 def main():
     mulai = time.time()
     print(f"=== Tender Scraper MPA -- {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===")
@@ -71,9 +80,12 @@ def main():
 
         time.sleep(config.JEDA_ANTAR_PORTAL_DETIK)
 
-    if tender_baru_relevan:
-        print(f"\nMengirim notifikasi untuk {len(tender_baru_relevan)} tender relevan...")
-        notify.kirim_notifikasi(tender_baru_relevan)
+    tender_untuk_email = [t for t in tender_baru_relevan if not tahapan_selesai(t.tahapan)]
+    if tender_untuk_email:
+        dilewati = len(tender_baru_relevan) - len(tender_untuk_email)
+        print(f"\nMengirim notifikasi untuk {len(tender_untuk_email)} tender relevan & masih aktif "
+              f"({dilewati} dilewati karena sudah selesai/gagal)...")
+        notify.kirim_notifikasi(tender_untuk_email)
 
     conn.close()
     durasi = time.time() - mulai
