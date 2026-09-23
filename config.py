@@ -32,6 +32,10 @@ KATA_KUNCI_RELEVAN = [
     "pembangunan", "pemeliharaan gedung", "finishing", "partisi",
     "event", "pameran", "booth", "dekorasi", "panggung",
     "mekanikal", "elektrikal", "plumbing", "hvac",
+    # Istilah event/pameran internasional (banyak dipakai Kemenpar,
+    # Kemendag, dan kementerian lain untuk tender expo luar negeri)
+    "fair", "expo", "exhibition", "pavilion", "paviliun",
+    "konvensi", "convention", "gala", "seremoni",
 ]
 
 HPS_MINIMUM = 0  # 0 = tampilkan semua. Contoh: 200_000_000 = hanya >= 200 juta.
