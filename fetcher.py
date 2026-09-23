@@ -82,6 +82,29 @@ def parse_rupiah(v) -> int:
     return int(bagian_rupiah) if bagian_rupiah.isdigit() else 0
 
 
+POLA_RUPIAH_SINGKAT = re.compile(r"([\d.,]+)\s*(jt|m|t)\b", re.IGNORECASE)
+
+
+def parse_rupiah_singkat(v) -> int:
+    """Parse format HPS singkat ala LPSE: '541,3 Jt' -> 541.300.000,
+    '60,2 M' -> 60.200.000.000. Jt=juta, M=miliar, T=triliun.
+    Koma di sini adalah desimal (bukan pemisah ribuan)."""
+    if v is None:
+        return 0
+    if isinstance(v, (int, float)):
+        return int(v)
+    s = str(v).strip()
+    if not s or s.lower() == "none":
+        return 0
+    m = POLA_RUPIAH_SINGKAT.search(s)
+    if not m:
+        return parse_rupiah(v)  # fallback: mungkin sudah format penuh
+    angka = float(m.group(1).replace(".", "").replace(",", "."))
+    satuan = m.group(2).lower()
+    pengali = {"jt": 1_000_000, "m": 1_000_000_000, "t": 1_000_000_000_000}[satuan]
+    return int(angka * pengali)
+
+
 def cek_relevan(nama_paket: str, kata_kunci: list) -> bool:
     n = nama_paket.lower()
     return any(k.lower() in n for k in kata_kunci)
@@ -176,16 +199,22 @@ def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
 
         # Pemetaan kolom dikonfirmasi dari data mentah asli server (lihat --debug),
         # BUKAN tebakan dari struktur MVP lama:
-        #   0=kode  1=nama paket  2=instansi  3=tahapan  4=HPS dibulatkan (mis. "60,2 M")
+        #   0=kode  1=nama paket  2=instansi  3=tahapan
+        #   4=HPS PERKIRAAN (SEBELUM tender), format singkat mis. "60,2 M"/"541,3 Jt"
+        #       -- INI yang dipakai, karena berguna untuk menilai besar proyek
+        #       SEBELUM ikut lelang (tender yang masih berjalan/relevan diikuti).
         #   5=metode kualifikasi  6=jenis  7=metode evaluasi
         #   8=kategori + tahun anggaran (mis. "Pekerjaan Konstruksi - TA 2026,2027")
-        #   9=jumlah peserta  10=HPS presisi penuh (mis. "Rp. 57.446.418.426,00")
+        #   9=jumlah peserta
+        #   10=NILAI KONTRAK FINAL (baru terisi SETELAH tender selesai & pemenang
+        #       ditentukan -- untuk tender yang masih berjalan isinya literal teks
+        #       "Nilai Kontrak belum dibuat", BUKAN HPS -- jangan dipakai sebagai HPS).
         kode_tender = bersih(nilai[0])
         nama = bersih(nilai[1])
         instansi = bersih(nilai[2])
         tahapan = bersih(nilai[3])
         kategori_tahun = bersih(nilai[8])
-        hps_raw = nilai[10]
+        hps_raw = nilai[4]
 
         if not nama:
             continue
@@ -198,7 +227,7 @@ def tarik_tender_portal(kode_portal: str, kata_kunci_relevan: list,
 
         hasil.append(Tender(
             id_unik=id_unik, kode=kode_angka or kode_tender, nama_paket=nama,
-            instansi=instansi, tahapan=tahapan, hps=parse_rupiah(hps_raw),
+            instansi=instansi, tahapan=tahapan, hps=parse_rupiah_singkat(hps_raw),
             jadwal=kategori_tahun, link=link,
             relevan=cek_relevan(nama, kata_kunci_relevan),
         ))
