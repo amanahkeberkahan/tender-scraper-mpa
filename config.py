@@ -24,6 +24,7 @@ PORTAL_LPSE = [
     # Kementerian Pariwisata -- banyak tender event/pameran/booth/dekorasi,
     # relevan untuk lini bisnis event management MPA.
     {"nama": "LPSE Kementerian Pariwisata", "kode": "kemenpar"},
+    {"nama": "LPSE Kabupaten Jember", "kode": "jemberkab"},
 ]
 
 KATA_KUNCI_RELEVAN = [
