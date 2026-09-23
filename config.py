@@ -13,6 +13,14 @@ PORTAL_LPSE = [
     {"nama": "LPSE Provinsi Jawa Timur", "kode": "jatimprov"},
     {"nama": "LPSE Kementerian PU", "kode": "pu"},
     {"nama": "LPSE LKPP", "kode": "lkpp"},
+    # --- Ditambahkan atas permintaan, kode BELUM diverifikasi langsung
+    # (sandbox tidak bisa akses internet) -- tes dulu satu-satu pakai
+    # `python fetcher.py <kode>` sebelum diandalkan penuh. Kalau salah,
+    # main.py cuma akan cetak "GAGAL" untuk portal itu tanpa mengganggu
+    # portal lain, jadi aman dicoba.
+    {"nama": "LPSE Kabupaten Sidoarjo", "kode": "sidoarjokab"},
+    {"nama": "LPSE Kabupaten Gresik", "kode": "gresikkab"},
+    {"nama": "LPSE Kota Malang", "kode": "malangkota"},
 ]
 
 KATA_KUNCI_RELEVAN = [
