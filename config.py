@@ -21,6 +21,9 @@ PORTAL_LPSE = [
     {"nama": "LPSE Kabupaten Sidoarjo", "kode": "sidoarjokab"},
     {"nama": "LPSE Kabupaten Gresik", "kode": "gresikkab"},
     {"nama": "LPSE Kota Malang", "kode": "malangkota"},
+    # Kementerian Pariwisata -- banyak tender event/pameran/booth/dekorasi,
+    # relevan untuk lini bisnis event management MPA.
+    {"nama": "LPSE Kementerian Pariwisata", "kode": "kemenpar"},
 ]
 
 KATA_KUNCI_RELEVAN = [
