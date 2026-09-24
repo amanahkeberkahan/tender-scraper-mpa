@@ -59,3 +59,25 @@ def kirim_ke_dashboard(tender_list: list, portal_nama: str, ditemukan_pada: str)
             print(f"[DASHBOARD] GAGAL ({portal_nama}): HTTP {resp.status_code} - {data.get('pesan', '')}")
     except requests.exceptions.RequestException as e:
         print(f"[DASHBOARD] GAGAL koneksi ({portal_nama}): {e}")
+
+
+def kirim_ping() -> None:
+    """Beritahu dashboard "scraper barusan sukses jalan", terlepas ada tender
+    baru atau tidak -- dipanggil SEKALI di akhir main.py. Tanpa ini, kalau
+    semua portal 0 tender baru, dashboard tidak pernah dengar kabar dari
+    scraper sama sekali, dan "Terakhir disinkronkan" jadi kelihatan basi
+    padahal scraper-nya sukses (cuma memang tidak ada yang berubah)."""
+    if not config.DASHBOARD_AKTIF or not config.DASHBOARD_API_URL or not config.DASHBOARD_API_KEY:
+        return
+    try:
+        resp = requests.post(
+            config.DASHBOARD_API_URL, json=[],
+            headers={"X-API-Key": config.DASHBOARD_API_KEY, "Content-Type": "application/json"},
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            print("[DASHBOARD] Ping sukses -- 'Terakhir disinkronkan' ter-update.")
+        else:
+            print(f"[DASHBOARD] Ping gagal: HTTP {resp.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"[DASHBOARD] Ping gagal koneksi: {e}")

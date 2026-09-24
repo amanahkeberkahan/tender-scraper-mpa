@@ -80,6 +80,8 @@ def main():
 
         time.sleep(config.JEDA_ANTAR_PORTAL_DETIK)
 
+    dashboard.kirim_ping()
+
     tender_untuk_email = [t for t in tender_baru_relevan if not tahapan_selesai(t.tahapan)]
     if tender_untuk_email:
         dilewati = len(tender_baru_relevan) - len(tender_untuk_email)
