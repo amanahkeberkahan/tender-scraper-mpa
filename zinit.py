@@ -87,7 +87,14 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
                 kolom_password.fill(password)
                 page.keyboard.press("Enter")
 
-                page.wait_for_url(re.compile(r"/requests"), timeout=30000)
+                # Setelah login, akun bisa diarahkan ke /companies dulu
+                # (pilih perusahaan) sebelum masuk ke /requests -- akun MPA
+                # cuma terhubung ke 1 perusahaan ("Multi Power Abadi"), jadi
+                # langsung klik itu kalau mendarat di halaman pilih perusahaan.
+                page.wait_for_url(re.compile(r"/(requests|companies)"), timeout=30000)
+                if "/companies" in page.url:
+                    page.locator("text=Multi Power Abadi").first.click(timeout=15000)
+                    page.wait_for_url(re.compile(r"/requests"), timeout=30000)
                 page.wait_for_timeout(1000)
 
                 token = page.evaluate("() => window.localStorage.getItem('access')")
