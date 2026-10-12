@@ -31,13 +31,27 @@ bisnis MPA (konstruksi, interior, renovasi, event), simpan ke database lokal
 
 ## Struktur file
 
-- `fetcher.py` — tarik data dari 1 portal (bisa dites langsung: `python fetcher.py surabaya`)
+- `fetcher.py` — tarik data dari 1 portal LPSE (bisa dites langsung: `python fetcher.py surabaya`)
+- `zinit.py` — login otomatis + tarik undangan RFP dari app.zinit.id (bisa dites langsung: `python zinit.py`)
 - `storage.py` — simpan ke SQLite (`tender.db`), dedup by ID tender
 - `notify.py` — kirim email (+ Telegram opsional) saat ada tender baru relevan
 - `dashboard.py` — kirim tender baru ke dashboard web ProjectFlow (project.multipowerabadi.co.id)
 - `config.py` — daftar portal, kata kunci relevansi, baca kredensial dari env var
 - `main.py` — orkestrator, ini yang dijadwalkan jalan otomatis
 - `probe_endpoints.py` — skrip diagnostic (sudah tidak perlu dipakai lagi kecuali LPSE ganti struktur lagi)
+
+## Sumber Zinit (app.zinit.id)
+
+Beda dari LPSE: Zinit bukan daftar tender publik, tapi platform B2B yang
+mengirim **undangan RFP privat** ke akun vendor MPA yang sudah terdaftar.
+Jadi modul ini bukan "cari tender baru", tapi "jangan sampai ada undangan
+RFP yang terlewat" (lihat docstring `zinit.py` untuk detail teknis endpoint
+`/api/v1/requests/` dan cara login-nya pakai Playwright).
+
+**WAJIB sebelum dipakai**, pasang browser Playwright (sekali saja):
+```
+playwright install chromium
+```
 
 ## Integrasi Dashboard ProjectFlow
 
@@ -68,12 +82,19 @@ pip install -r requirements.txt
    ```
    (`setx` menyimpan permanen, tapi baru berlaku di Command Prompt yang dibuka SETELAHNYA)
 
-### 3. Tes jalan manual
+### 3. Setup kredensial Zinit (app.zinit.id)
+```
+setx ZINIT_EMAIL "multipowerabadi@gmail.com"
+setx ZINIT_PASSWORD "password_akun_zinit"
+```
+Set `ZINIT_AKTIF` ke `"false"` kalau mau nonaktifkan sumber ini sementara.
+
+### 4. Tes jalan manual
 ```
 python main.py
 ```
 
-### 4. Jadwalkan otomatis (Windows Task Scheduler)
+### 5. Jadwalkan otomatis (Windows Task Scheduler)
 1. Buka **Task Scheduler** (cari lewat Start Menu)
 2. **Create Task** > kasih nama "Tender Scraper MPA"
 3. Tab **Triggers** > New > Daily, atur jam 08:00 (buat trigger kedua untuk 17:00)

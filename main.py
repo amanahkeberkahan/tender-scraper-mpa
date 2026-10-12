@@ -17,6 +17,7 @@ import config
 import dashboard
 import notify
 import storage
+import zinit
 from fetcher import EndpointTidakDitemukan, tarik_tender_portal
 
 import requests
@@ -29,6 +30,32 @@ def tahapan_selesai(tahapan: str) -> bool:
     tim ribut soal tender yang sudah lewat."""
     t = (tahapan or "").lower()
     return "selesai" in t or "gagal" in t or "batal" in t
+
+
+def proses_sumber(conn, id_tersimpan: set, nama_sumber: str, daftar: list,
+                    tender_baru_relevan: list) -> int:
+    """Simpan tender/RFP baru dari satu sumber (portal LPSE atau Zinit) ke
+    DB, kirim ke dashboard, kumpulkan yang relevan. Return jumlah baru."""
+    baru_di_sumber_ini = 0
+    tender_baru_sumber_ini = []
+    waktu_temu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for t in daftar:
+        if t.id_unik in id_tersimpan:
+            continue
+        if config.HPS_MINIMUM > 0 and t.hps > 0 and t.hps < config.HPS_MINIMUM:
+            continue
+
+        id_tersimpan.add(t.id_unik)
+        storage.simpan_tender(conn, t, nama_sumber)
+        baru_di_sumber_ini += 1
+        tender_baru_sumber_ini.append(t)
+        if t.relevan:
+            tender_baru_relevan.append(t)
+
+    print(f"[{nama_sumber}] {baru_di_sumber_ini} tender/RFP BARU disimpan.")
+    dashboard.kirim_ke_dashboard(tender_baru_sumber_ini, nama_sumber, waktu_temu)
+    return baru_di_sumber_ini
 
 
 def main():
@@ -49,27 +76,7 @@ def main():
                 maks_baris=config.MAKS_BARIS_PER_PORTAL,
             )
             print(f"[{portal['nama']}] {len(daftar)} tender diterima dari server.")
-
-            baru_di_portal_ini = 0
-            tender_baru_portal_ini = []
-            waktu_temu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            for t in daftar:
-                if t.id_unik in id_tersimpan:
-                    continue
-                if config.HPS_MINIMUM > 0 and t.hps > 0 and t.hps < config.HPS_MINIMUM:
-                    continue
-
-                id_tersimpan.add(t.id_unik)
-                storage.simpan_tender(conn, t, portal["nama"])
-                total_baru += 1
-                baru_di_portal_ini += 1
-                tender_baru_portal_ini.append(t)
-                if t.relevan:
-                    tender_baru_relevan.append(t)
-
-            print(f"[{portal['nama']}] {baru_di_portal_ini} tender BARU disimpan.")
-
-            dashboard.kirim_ke_dashboard(tender_baru_portal_ini, portal["nama"], waktu_temu)
+            total_baru += proses_sumber(conn, id_tersimpan, portal["nama"], daftar, tender_baru_relevan)
 
         except EndpointTidakDitemukan as e:
             print(f"[{portal['nama']}] GAGAL -- struktur endpoint berubah: {e}")
@@ -79,6 +86,20 @@ def main():
             print(f"[{portal['nama']}] GAGAL parsing respons: {e}")
 
         time.sleep(config.JEDA_ANTAR_PORTAL_DETIK)
+
+    if config.ZINIT_AKTIF and config.ZINIT_EMAIL and config.ZINIT_PASSWORD:
+        print("\n[Zinit] login & menarik data RFP...")
+        try:
+            token = zinit.login_dan_ambil_token(config.ZINIT_EMAIL, config.ZINIT_PASSWORD)
+            daftar = zinit.tarik_rfp_zinit(token, config.KATA_KUNCI_RELEVAN)
+            print(f"[Zinit] {len(daftar)} RFP diterima dari server.")
+            total_baru += proses_sumber(conn, id_tersimpan, "Zinit (Undangan RFP)", daftar, tender_baru_relevan)
+        except zinit.ZinitLoginGagal as e:
+            print(f"[Zinit] GAGAL login: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"[Zinit] GAGAL koneksi: {e}")
+    elif config.ZINIT_AKTIF:
+        print("\n[Zinit] Dilewati: ZINIT_EMAIL / ZINIT_PASSWORD belum diset.")
 
     dashboard.kirim_ping()
 

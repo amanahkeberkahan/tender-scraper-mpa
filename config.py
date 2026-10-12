@@ -66,6 +66,11 @@ TELEGRAM_AKTIF = os.environ.get("TELEGRAM_AKTIF", "false").lower() == "true"
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+# ---- ZINIT (app.zinit.id) -- undangan RFP privat, bukan tender publik ----
+ZINIT_AKTIF = os.environ.get("ZINIT_AKTIF", "true").lower() == "true"
+ZINIT_EMAIL = os.environ.get("ZINIT_EMAIL", "")
+ZINIT_PASSWORD = os.environ.get("ZINIT_PASSWORD", "")
+
 # ---- DASHBOARD ProjectFlow (project.multipowerabadi.co.id) ----
 DASHBOARD_AKTIF = os.environ.get("DASHBOARD_AKTIF", "true").lower() == "true"
 DASHBOARD_API_URL = os.environ.get(
