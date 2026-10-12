@@ -70,12 +70,10 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
 
     error_terakhir = None
     for i in range(percobaan):
-        page = None
-        browser = None
-        try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=headless)
-                page = browser.new_page()
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=headless)
+            page = browser.new_page()
+            try:
                 page.goto(LOGIN_URL, timeout=30000)
                 page.wait_for_load_state("networkidle", timeout=20000)
 
@@ -103,29 +101,26 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
 
                 if not headless:
                     page.wait_for_timeout(2000)
-                browser.close()
 
                 if not token:
                     raise ZinitLoginGagal("Login sukses tapi token 'access' tidak ketemu di localStorage.")
+                browser.close()
                 return token
-        except Exception as e:  # noqa: BLE001 -- sengaja luas, banyak jenis error Playwright
-            error_terakhir = e
-            try:
-                if page is not None:
+            except Exception as e:  # noqa: BLE001 -- sengaja luas, banyak jenis error Playwright
+                error_terakhir = e
+                # Screenshot HARUS diambil di sini (browser/page masih hidup) --
+                # kalau diambil setelah keluar dari blok `with`, Playwright-nya
+                # sudah dimatikan duluan dan screenshot gagal diam-diam.
+                try:
                     path_gambar = f"zinit_debug_{i + 1}.png"
                     page.screenshot(path=path_gambar)
                     print(f"[Zinit] Screenshot kondisi gagal disimpan: {path_gambar} "
                           f"(URL saat itu: {page.url})")
-            except Exception:  # noqa: BLE001 -- screenshot debug, jangan sampai gagal nutupi error asli
-                pass
-            finally:
-                if browser is not None:
-                    try:
-                        browser.close()
-                    except Exception:  # noqa: BLE001
-                        pass
-            if i < percobaan - 1:
-                time.sleep(5)
+                except Exception as e_ss:  # noqa: BLE001
+                    print(f"[Zinit] (Screenshot debug juga gagal diambil: {e_ss})")
+                browser.close()
+        if i < percobaan - 1:
+            time.sleep(5)
     raise ZinitLoginGagal(f"Login ke Zinit gagal setelah {percobaan}x percobaan: {error_terakhir}")
 
 
