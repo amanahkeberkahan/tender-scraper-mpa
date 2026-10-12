@@ -58,6 +58,16 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
             "  pip install playwright\n  playwright install chromium"
         ) from e
 
+    # Form login Zinit bergaya komponen auth pihak ketiga (mis. Clerk) --
+    # field email tidak selalu type="email", kadang type="text" dengan
+    # name/id "identifier". Coba beberapa kemungkinan selector berurutan,
+    # pakai yang pertama ketemu & kelihatan (visible).
+    SELECTOR_EMAIL = (
+        'input[name="identifier"], input[type="email"], '
+        'input[autocomplete="email"], input[autocomplete="username"]'
+    )
+    SELECTOR_PASSWORD = 'input[type="password"], input[name="password"]'
+
     error_terakhir = None
     for i in range(percobaan):
         try:
@@ -65,18 +75,25 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
                 browser = p.chromium.launch(headless=headless)
                 page = browser.new_page()
                 page.goto(LOGIN_URL, timeout=30000)
+                page.wait_for_load_state("networkidle", timeout=20000)
 
-                page.fill('input[type="email"]', email, timeout=15000)
+                kolom_email = page.locator(SELECTOR_EMAIL).first
+                kolom_email.wait_for(state="visible", timeout=20000)
+                kolom_email.fill(email)
                 page.keyboard.press("Enter")
-                page.wait_for_timeout(1500)
 
-                page.fill('input[type="password"]', password, timeout=15000)
+                kolom_password = page.locator(SELECTOR_PASSWORD).first
+                kolom_password.wait_for(state="visible", timeout=20000)
+                kolom_password.fill(password)
                 page.keyboard.press("Enter")
 
                 page.wait_for_url(re.compile(r"/requests"), timeout=30000)
                 page.wait_for_timeout(1000)
 
                 token = page.evaluate("() => window.localStorage.getItem('access')")
+
+                if not headless:
+                    page.wait_for_timeout(2000)
                 browser.close()
 
                 if not token:
