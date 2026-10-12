@@ -70,6 +70,8 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
 
     error_terakhir = None
     for i in range(percobaan):
+        page = None
+        browser = None
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=headless)
@@ -108,6 +110,20 @@ def login_dan_ambil_token(email: str, password: str, headless: bool = True,
                 return token
         except Exception as e:  # noqa: BLE001 -- sengaja luas, banyak jenis error Playwright
             error_terakhir = e
+            try:
+                if page is not None:
+                    path_gambar = f"zinit_debug_{i + 1}.png"
+                    page.screenshot(path=path_gambar)
+                    print(f"[Zinit] Screenshot kondisi gagal disimpan: {path_gambar} "
+                          f"(URL saat itu: {page.url})")
+            except Exception:  # noqa: BLE001 -- screenshot debug, jangan sampai gagal nutupi error asli
+                pass
+            finally:
+                if browser is not None:
+                    try:
+                        browser.close()
+                    except Exception:  # noqa: BLE001
+                        pass
             if i < percobaan - 1:
                 time.sleep(5)
     raise ZinitLoginGagal(f"Login ke Zinit gagal setelah {percobaan}x percobaan: {error_terakhir}")
