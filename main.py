@@ -15,6 +15,7 @@ from datetime import datetime
 
 import config
 import dashboard
+import iaproc
 import notify
 import storage
 import zinit
@@ -100,6 +101,20 @@ def main():
             print(f"[Zinit] GAGAL koneksi: {e}")
     elif config.ZINIT_AKTIF:
         print("\n[Zinit] Dilewati: ZINIT_EMAIL / ZINIT_PASSWORD belum diset.")
+
+    if config.IAPROC_AKTIF and config.IAPROC_USERNAME and config.IAPROC_PASSWORD:
+        print("\n[IAPRO InJourney] login & menarik data undangan tender...")
+        try:
+            token, group_id = iaproc.login(config.IAPROC_USERNAME, config.IAPROC_PASSWORD)
+            daftar = iaproc.tarik_undangan_tender(token, group_id, config.KATA_KUNCI_RELEVAN)
+            print(f"[IAPRO InJourney] {len(daftar)} undangan tender diterima dari server.")
+            total_baru += proses_sumber(conn, id_tersimpan, "IAPRO InJourney Airports", daftar, tender_baru_relevan)
+        except iaproc.IaproLoginGagal as e:
+            print(f"[IAPRO InJourney] GAGAL login: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"[IAPRO InJourney] GAGAL koneksi: {e}")
+    elif config.IAPROC_AKTIF:
+        print("\n[IAPRO InJourney] Dilewati: IAPROC_USERNAME / IAPROC_PASSWORD belum diset.")
 
     dashboard.kirim_ping()
 

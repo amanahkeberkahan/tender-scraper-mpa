@@ -71,6 +71,12 @@ ZINIT_AKTIF = os.environ.get("ZINIT_AKTIF", "true").lower() == "true"
 ZINIT_EMAIL = os.environ.get("ZINIT_EMAIL", "")
 ZINIT_PASSWORD = os.environ.get("ZINIT_PASSWORD", "")
 
+# ---- IAPRO InJourney Airports (iaproc.injourneyairports.id) -- undangan
+# tender privat dari BUMN pengelola bandara, bukan tender publik ----
+IAPROC_AKTIF = os.environ.get("IAPROC_AKTIF", "true").lower() == "true"
+IAPROC_USERNAME = os.environ.get("IAPROC_USERNAME", "")
+IAPROC_PASSWORD = os.environ.get("IAPROC_PASSWORD", "")
+
 # ---- DASHBOARD ProjectFlow (project.multipowerabadi.co.id) ----
 DASHBOARD_AKTIF = os.environ.get("DASHBOARD_AKTIF", "true").lower() == "true"
 DASHBOARD_API_URL = os.environ.get(

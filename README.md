@@ -33,6 +33,7 @@ bisnis MPA (konstruksi, interior, renovasi, event), simpan ke database lokal
 
 - `fetcher.py` — tarik data dari 1 portal LPSE (bisa dites langsung: `python fetcher.py surabaya`)
 - `zinit.py` — login otomatis + tarik undangan RFP dari app.zinit.id (bisa dites langsung: `python zinit.py`)
+- `iaproc.py` — login otomatis + tarik undangan tender dari iaproc.injourneyairports.id (bisa dites langsung: `python iaproc.py`)
 - `storage.py` — simpan ke SQLite (`tender.db`), dedup by ID tender
 - `notify.py` — kirim email (+ Telegram opsional) saat ada tender baru relevan
 - `dashboard.py` — kirim tender baru ke dashboard web ProjectFlow (project.multipowerabadi.co.id)
@@ -52,6 +53,18 @@ RFP yang terlewat" (lihat docstring `zinit.py` untuk detail teknis endpoint
 ```
 playwright install chromium
 ```
+
+## Sumber IAPRO InJourney Airports (iaproc.injourneyairports.id)
+
+Portal procurement BUMN pengelola bandara (eks Angkasa Pura I & II, grup
+Danantara). Sama seperti Zinit: bukan tender publik, tapi **undangan tender
+privat** ke akun vendor MPA. Lebih simpel dari Zinit -- autentikasinya
+`POST /v1/api/login` biasa (bukan JWT lewat browser), jadi tidak butuh
+Playwright, cukup `requests` (lihat docstring `iaproc.py`).
+
+Catatan: situs ini mendeteksi & memblokir DevTools lewat JS kalau mau
+investigasi ulang manual -- buka DevTools SEBELUM halaman selesai dimuat
+(mis. buka tab kosong dulu, buka DevTools, baru pindah/ketik URL-nya).
 
 ## Integrasi Dashboard ProjectFlow
 
@@ -89,12 +102,19 @@ setx ZINIT_PASSWORD "password_akun_zinit"
 ```
 Set `ZINIT_AKTIF` ke `"false"` kalau mau nonaktifkan sumber ini sementara.
 
-### 4. Tes jalan manual
+### 4. Setup kredensial IAPRO InJourney Airports
+```
+setx IAPROC_USERNAME "P009908"
+setx IAPROC_PASSWORD "password_akun_iapro"
+```
+Set `IAPROC_AKTIF` ke `"false"` kalau mau nonaktifkan sumber ini sementara.
+
+### 5. Tes jalan manual
 ```
 python main.py
 ```
 
-### 5. Jadwalkan otomatis (Windows Task Scheduler)
+### 6. Jadwalkan otomatis (Windows Task Scheduler)
 1. Buka **Task Scheduler** (cari lewat Start Menu)
 2. **Create Task** > kasih nama "Tender Scraper MPA"
 3. Tab **Triggers** > New > Daily, atur jam 08:00 (buat trigger kedua untuk 17:00)
